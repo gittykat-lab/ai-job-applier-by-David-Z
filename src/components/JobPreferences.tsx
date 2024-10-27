@@ -1,40 +1,59 @@
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { MapPin, Briefcase, X } from 'lucide-react'
+import { MapPin, Briefcase } from 'lucide-react'
 
-interface JobPreferencesProps {
-  blacklistedCompanies: string[];
-  onRemoveCompany: (index: number) => void;
-  onAddCompany: () => void;
-}
-
-export function JobPreferences({ blacklistedCompanies, onRemoveCompany, onAddCompany }: JobPreferencesProps) {
+const JobPreferences: React.FC = () => {
   const [jobTitle, setJobTitle] = useState('')
   const [location, setLocation] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleLinkedInIntegration = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const response = await fetch('/api/user-settings')
+        if (!response.ok) {
+          throw new Error('Failed to fetch preferences')
+        }
+        const data = await response.json()
+        setJobTitle(data.jobTitle)
+        setLocation(data.location)
+      } catch (error) {
+        console.error('Error fetching preferences:', error)
+        setError('Failed to fetch preferences. Please try again later.')
+      }
+    }
+
+    fetchPreferences()
+  }, [])
+
+  const handleSavePreferences = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+
     try {
-      const response = await fetch('/api/linkedin-integration', {
+      const response = await fetch('/api/user-settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ jobTitle, location }),
       })
+
       if (!response.ok) {
-        throw new Error('Failed to integrate with LinkedIn')
+        throw new Error('Failed to save preferences')
       }
-      alert('LinkedIn integration successful!')
-      // Reset form fields
-      setJobTitle('')
-      setLocation('')
+
+      alert('Preferences saved successfully!')
     } catch (error) {
-      console.error('LinkedIn integration error:', error)
-      alert('Failed to integrate with LinkedIn. Please try again.')
+      console.error('Error saving preferences:', error)
+      setError('Failed to save preferences. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -44,12 +63,8 @@ export function JobPreferences({ blacklistedCompanies, onRemoveCompany, onAddCom
         <CardTitle>Job Preferences</CardTitle>
         <CardDescription>Set your job search criteria</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Existing Job Preferences content */}
-        {/* ... */}
-
-        {/* LinkedIn Integration Form */}
-        <form onSubmit={handleLinkedInIntegration} className="space-y-4">
+      <CardContent>
+        <form onSubmit={handleSavePreferences} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="jobTitle">Preferred Job Title</Label>
             <div className="flex items-center space-x-2">
@@ -74,9 +89,14 @@ export function JobPreferences({ blacklistedCompanies, onRemoveCompany, onAddCom
               />
             </div>
           </div>
-          <Button type="submit">Integrate with LinkedIn</Button>
+          {error && <p className="text-red-500">{error}</p>}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Saving...' : 'Save Preferences'}
+          </Button>
         </form>
       </CardContent>
     </Card>
   )
 }
+
+export default JobPreferences

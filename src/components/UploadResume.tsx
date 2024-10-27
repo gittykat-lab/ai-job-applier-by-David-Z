@@ -1,8 +1,9 @@
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Upload, Linkedin } from 'lucide-react'
+import { Linkedin } from 'lucide-react'
 
-export function UploadResume() {
+const UploadResume: React.FC = () => {
   return (
     <div className="space-y-4">
       <Card>
@@ -29,3 +30,5 @@ export function UploadResume() {
     </div>
   )
 }
+
+export default UploadResume

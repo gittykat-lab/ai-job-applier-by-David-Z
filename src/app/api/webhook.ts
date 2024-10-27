@@ -57,22 +57,33 @@ const relevantEvents = new Set([
   'customer.subscription.deleted',
 ])
 
+// Define a type for the expected response
+type WebhookResponse = {
+  received: boolean;
+} | {
+  error: {
+    message: string;
+  };
+}
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse<WebhookResponse>
 ) {
   if (req.method === 'POST') {
-    const buf = await buffer(req)
-    const sig = req.headers['stripe-signature']!
+    const buf = await buffer(req);
+    const sig = req.headers['stripe-signature'] as string;
 
-    let event: Stripe.Event
+    let event: Stripe.Event;
 
     try {
-      event = stripe.webhooks.constructEvent(buf.toString(), sig, webhookSecret)
-    } catch (err: any) {
-      console.log(`❌ Error message: ${err.message}`)
-      res.status(400).send(`Webhook Error: ${err.message}`)
-      return
+      event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET!);
+    } catch (err) {
+      // Replace 'any' with a more specific error type
+      const error = err as Error;
+      console.log(`❌ Error message: ${error.message}`);
+      res.status(400).send(`Webhook Error: ${error.message}`);
+      return;
     }
 
     if (relevantEvents.has(event.type)) {
@@ -93,7 +104,7 @@ export default async function handler(
             })
             break
           default:
-            throw new Error('Unhandled relevant event!')
+            console.log(`Unhandled event type ${event.type}`)
         }
       } catch (error) {
         console.log(error)
