@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { plan, userId } = req.body
 
       // Fetch or create a Stripe customer for this user
-      let customer = await getOrCreateStripeCustomer(userId)
+      const customer = await getOrCreateStripeCustomer(userId)
 
       // Set the price based on the selected plan
       const priceId = plan === 'monthly' 
@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 async function getOrCreateStripeCustomer(userId: string): Promise<Stripe.Customer> {
   // Implement this function to fetch or create a Stripe customer
   // This is a placeholder - you need to implement this based on your user management system
-  let customer: Stripe.Customer
+  const customer: Stripe.Customer
 
   // Check if the user already has a Stripe customer ID
   const user = await getUserFromDatabase(userId)
